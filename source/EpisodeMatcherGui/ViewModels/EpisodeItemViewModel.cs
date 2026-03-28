@@ -27,9 +27,11 @@ public class EpisodeItemViewModel : INotifyPropertyChanged
     private string _statusText = "Pending";
     private bool _isSelected = true;
     private string _extractedTextSnippet = "";
+    private string _extractedText = "";
     private string _candidatesText = "";
     private List<MatchCandidate> _topCandidates = new();
     private string _hoveredCandidateText = "";
+    private MatchCandidate? _selectedCandidate;
 
     public string FilePath
     {
@@ -88,6 +90,12 @@ public class EpisodeItemViewModel : INotifyPropertyChanged
         set { _extractedTextSnippet = value; OnPropertyChanged(); }
     }
 
+    public string ExtractedText
+    {
+        get => _extractedText;
+        set { _extractedText = value; OnPropertyChanged(); }
+    }
+
     public string CandidatesText
     {
         get => _candidatesText;
@@ -106,11 +114,22 @@ public class EpisodeItemViewModel : INotifyPropertyChanged
         set { _hoveredCandidateText = value; OnPropertyChanged(); }
     }
 
+    public MatchCandidate? SelectedCandidate
+    {
+        get => _selectedCandidate;
+        set { _selectedCandidate = value; OnPropertyChanged(); }
+    }
+
     public void SelectCandidate(MatchCandidate candidate)
     {
+        SelectedCandidate = candidate;
         MatchedName = candidate.Episode.EpisodeName;
         Score = candidate.Score;
         HoveredCandidateText = candidate.Episode.EpisodeName;
+        
+        // Show what the file will be renamed to
+        var ext = System.IO.Path.GetExtension(FileName);
+        StatusText = $"→ {candidate.Episode.EpisodeName}{ext}";
     }
 
     public bool IsProcessing => Status == EpisodeStatus.Processing;

@@ -13,6 +13,7 @@
 
   <Window.Resources>
     <conv:StringToBrushConverter x:Key="StrBrush"/>
+    <conv:SelectedCandidateConverter x:Key="IsSelectedConverter"/>
   </Window.Resources>
 
   <Window.Styles>
@@ -61,18 +62,19 @@
 
     <!-- Tool status bar -->
     <Border Classes="card" DockPanel.Dock="Top">
-      <StackPanel Orientation="Horizontal" Spacing="20">
+      <StackPanel Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
         <TextBlock Text="Tools:" FontWeight="SemiBold" VerticalAlignment="Center"/>
-        <ItemsControl ItemsSource="{Binding Tools}">
+        <ItemsControl ItemsSource="{Binding Tools}" VerticalAlignment="Center">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-              <StackPanel Orientation="Horizontal" Spacing="16"/>
+              <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Center"/>
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="vm:ToolStatus">
               <StackPanel Orientation="Horizontal" Spacing="4"
-                          ToolTip.Tip="{Binding Detail}">
+                          ToolTip.Tip="{Binding Detail}"
+                          VerticalAlignment="Center">
                 <TextBlock Text="{Binding Icon}" FontSize="14"/>
                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
                            Foreground="{Binding Color, Converter={StaticResource StrBrush}}"/>
@@ -136,26 +138,21 @@
                           Padding="8,6" Margin="0,0,0,4"
                           Cursor="Hand"
                           PointerPressed="OnEpisodeSelected">
-                    <Grid ColumnDefinitions="28,*,160,60,24">
+                    <Grid ColumnDefinitions="28,*,*,60,24">
 
                       <CheckBox Grid.Column="0"
                                 IsChecked="{Binding IsSelected}"
-                                VerticalAlignment="Center"/>
+                                VerticalAlignment="Top"
+                                Margin="0,2,0,0"/>
 
                       <StackPanel Grid.Column="1" Spacing="2"
-                                  VerticalAlignment="Center" Margin="0,0,8,0"
-                                  ToolTip.Tip="{Binding HoveredCandidateText, FallbackValue={Binding ExtractedTextSnippet}}">
+                                  VerticalAlignment="Top" Margin="0,0,12,0">
                         <TextBlock Text="{Binding FileName}"
                                    FontWeight="SemiBold" FontSize="12"
                                    TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding MatchedName}"
-                                   FontSize="11" Foreground="#89b4fa"
-                                   TextTrimming="CharacterEllipsis"
-                                   IsVisible="{Binding MatchedName,
-                                     Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                         <ItemsControl ItemsSource="{Binding TopCandidates}"
                                       IsVisible="{Binding TopCandidates.Count}"
-                                      Margin="0,4,0,0">
+                                      Margin="0,2,0,0">
                           <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                               <StackPanel Orientation="Vertical" Spacing="2"/>
@@ -169,7 +166,11 @@
                                       Click="OnSelectCandidate"
                                       PointerEntered="OnCandidatePointerEnter"
                                       PointerExited="OnCandidatePointerLeave"
-                                      Tag="{Binding}">
+                                      Tag="{Binding}"
+                                      ToolTip.Tip="{Binding $parent[ItemsControl].DataContext.HoveredCandidateText}"
+                                      Background="{Binding $parent[ItemsControl].DataContext.SelectedCandidate,
+                                        Converter={StaticResource IsSelectedConverter},
+                                        ConverterParameter={Binding}}">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                   <TextBlock Text="→" Margin="0"/>
                                   <TextBlock Text="{Binding Episode.EpisodeName}" Margin="0"/>
@@ -185,24 +186,26 @@
                       <TextBlock Grid.Column="2"
                                  Text="{Binding StatusText}"
                                  FontSize="11"
-                                 TextTrimming="CharacterEllipsis"
-                                 VerticalAlignment="Center"
-                                 Margin="0,0,8,0"
                                  Foreground="{Binding StatusColor,
-                                   Converter={StaticResource StrBrush}}"/>
+                                   Converter={StaticResource StrBrush}}"
+                                 VerticalAlignment="Top"
+                                 Margin="0,2,12,0"
+                                 IsVisible="{Binding StatusText,
+                                   Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
                       <TextBlock Grid.Column="3"
                                  Text="{Binding ScoreText}"
                                  FontSize="11" Foreground="#a6adc8"
-                                 VerticalAlignment="Center"
+                                 VerticalAlignment="Top"
                                  HorizontalAlignment="Right"
-                                 Margin="0,0,8,0"/>
+                                 Margin="0,2,8,0"/>
 
                       <TextBlock Grid.Column="4"
                                  Text="{Binding StatusIcon}"
                                  FontSize="14"
-                                 VerticalAlignment="Center"
-                                 HorizontalAlignment="Center"/>
+                                 VerticalAlignment="Top"
+                                 HorizontalAlignment="Center"
+                                 Margin="0,2,0,0"/>
                     </Grid>
                   </Border>
                 </DataTemplate>

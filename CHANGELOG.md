@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1]
+
+### Added
+- GUI subtitle selection: click a subtitle candidate to manually select as rename target
+- Subtitle extraction caching: second run skips re-extraction, instant processing
+- Forced rename for ambiguous matches when user manually selects a subtitle
+- Larger destination text display in GUI for better rename preview visibility
+- Candidate buttons stacked below filename with status color highlighting
+
+### Fixed
+- StatusText now updates correctly when clicking subtitle candidates
+- Missing visual feedback when manually selecting subtitles
+
+### Changed
+- Default ThreadCount: 2 → 3
+- Default WindowSeconds: 30s → 60s
+- GUI layout: candidates now displayed stacked below filename
+- Compact trimmed publish builds (separate cli/ and gui/ directories)
+
+## [Initial Release]
+
 ### Added
 - Multiple match candidates display in GUI (top 3 with scores)
 - Extracted subtitle text snippet on hover in GUI

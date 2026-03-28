@@ -190,24 +190,16 @@ public partial class MainWindow : Window
         if (sender is not Button button) return;
         if (button.Tag is not MatchCandidate candidate) return;
 
-        // Find the episode item in the current row by walking up the visual tree
+        // Walk up the visual tree to find the parent Border with the DataContext (episode row)
         var parent = button.Parent;
-        while (parent is not null && parent is not Border)
-            parent = (parent as Control)?.Parent;
-
-        if (parent is not Border itemBorder && parent is not null)
+        while (parent is not null)
         {
-            // Walk up further to find the data context
-            parent = (parent as Control)?.Parent;
-            while (parent is not null)
+            if (parent is Border border && border.DataContext is EpisodeItemViewModel ep)
             {
-                if (parent is Grid grid && grid.DataContext is EpisodeItemViewModel ep)
-                {
-                    ep.SelectCandidate(candidate);
-                    break;
-                }
-                parent = (parent as Control)?.Parent;
+                ep.SelectCandidate(candidate);
+                return;
             }
+            parent = (parent as Control)?.Parent;
         }
     }
 

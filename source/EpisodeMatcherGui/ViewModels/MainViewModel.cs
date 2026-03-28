@@ -36,14 +36,14 @@ public class MainViewModel : INotifyPropertyChanged
         set { _srtFolder = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanRun)); }
     }
 
-    private int _threadCount = 2;
+    private int _threadCount = 3;
     public int ThreadCount
     {
         get => _threadCount;
         set { _threadCount = Math.Max(1, Math.Min(16, value)); OnPropertyChanged(); }
     }
 
-    private double _windowSeconds = 30.0;
+    private double _windowSeconds = 60.0;
     public double WindowSeconds
     {
         get => _windowSeconds;
@@ -354,18 +354,28 @@ public class MainViewModel : INotifyPropertyChanged
         List<EpisodeReference> references,
         Matcher matcher)
     {
-        SetStatus(ep, EpisodeStatus.Processing, "Extracting subtitles…");
-
         string text;
-        try
+        
+        // Check if we already have extracted text from a previous run
+        if (!string.IsNullOrEmpty(ep.ExtractedText))
         {
-            text = await Task.Run(() => SubtitleExtractor.Extract(ep.FilePath, WindowSeconds));
+            SetStatus(ep, EpisodeStatus.Processing, "Using cached extraction…");
+            text = ep.ExtractedText;
         }
-        catch (Exception ex)
+        else
         {
-            SetStatus(ep, EpisodeStatus.Error, $"Extraction error: {ex.Message}");
-            AppendLog($"  [error] {ep.FileName}: {ex.Message}");
-            return;
+            SetStatus(ep, EpisodeStatus.Processing, "Extracting subtitles…");
+            try
+            {
+                text = await Task.Run(() => SubtitleExtractor.Extract(ep.FilePath, WindowSeconds));
+                ep.ExtractedText = text;  // Cache for next run
+            }
+            catch (Exception ex)
+            {
+                SetStatus(ep, EpisodeStatus.Error, $"Extraction error: {ex.Message}");
+                AppendLog($"  [error] {ep.FileName}: {ex.Message}");
+                return;
+            }
         }
 
         var result = matcher.Match(
@@ -396,13 +406,15 @@ public class MainViewModel : INotifyPropertyChanged
             ep.HoveredCandidateText = "";
         });
 
-        if (!DryRun && !result.Ambiguous)
+        if (!DryRun && (!result.Ambiguous || ep.SelectedCandidate != null))
         {
             try
             {
                 var dir     = Path.GetDirectoryName(ep.FilePath)!;
                 var ext     = Path.GetExtension(ep.FilePath);
-                var newName = SanitizeFileName(result.BestMatch.EpisodeName) + ext;
+                // Use manually selected candidate if available, otherwise use auto-matched result
+                var episodeName = ep.SelectedCandidate?.Episode.EpisodeName ?? result.BestMatch.EpisodeName;
+                var newName = SanitizeFileName(episodeName) + ext;
                 var newPath = Path.Combine(dir, newName);
 
                 if (!string.Equals(ep.FilePath, newPath, StringComparison.OrdinalIgnoreCase))
@@ -415,6 +427,7 @@ public class MainViewModel : INotifyPropertyChanged
                 {
                     ep.FilePath = newPath;
                     ep.FileName = newName;
+                    ep.IsSelected = false;  // Uncheck after successful rename
                 });
                 return;
             }
