@@ -35,17 +35,17 @@ jobs:
       
       - name: Copy markdown files to CLI
         run: |
-          cp source/README.md ./publish-cli/
-          cp source/LICENSE ./publish-cli/
-          cp source/ACKNOWLEDGEMENTS.md ./publish-cli/
-          cp source/CHANGELOG.md ./publish-cli/
+          cp README.md ./publish-cli/
+          cp LICENSE ./publish-cli/
+          cp ACKNOWLEDGEMENTS.md ./publish-cli/
+          cp CHANGELOG.md ./publish-cli/
       
       - name: Copy markdown files to GUI
         run: |
-          cp source/README.md ./publish-gui/
-          cp source/LICENSE ./publish-gui/
-          cp source/ACKNOWLEDGEMENTS.md ./publish-gui/
-          cp source/CHANGELOG.md ./publish-gui/
+          cp README.md ./publish-gui/
+          cp LICENSE ./publish-gui/
+          cp ACKNOWLEDGEMENTS.md ./publish-gui/
+          cp CHANGELOG.md ./publish-gui/
       
       - name: Create CLI zip (Linux)
         if: matrix.os == 'ubuntu-latest'
