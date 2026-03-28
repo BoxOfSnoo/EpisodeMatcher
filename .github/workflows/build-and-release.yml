@@ -1,0 +1,119 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+            artifact_suffix: linux-x64
+          - os: windows-latest
+            rid: win-x64
+            artifact_suffix: windows-x64
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      
+      - name: Publish CLI
+        run: dotnet publish source/EpisodeMatcherCli/EpisodeMatcher.csproj -c Release -r ${{ matrix.rid }} -o ./publish-cli
+      
+      - name: Publish GUI
+        run: dotnet publish source/EpisodeMatcherGui/EpisodeMatcherGui.csproj -c Release -r ${{ matrix.rid }} -o ./publish-gui
+      
+      - name: Copy markdown files to CLI
+        run: |
+          cp source/README.md ./publish-cli/
+          cp source/LICENSE ./publish-cli/
+          cp source/ACKNOWLEDGEMENTS.md ./publish-cli/
+          cp source/CHANGELOG.md ./publish-cli/
+      
+      - name: Copy markdown files to GUI
+        run: |
+          cp source/README.md ./publish-gui/
+          cp source/LICENSE ./publish-gui/
+          cp source/ACKNOWLEDGEMENTS.md ./publish-gui/
+          cp source/CHANGELOG.md ./publish-gui/
+      
+      - name: Create CLI zip (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cd publish-cli
+          zip -r ../EpisodeMatcher-cli-${{ matrix.artifact_suffix }}.zip .
+          cd ..
+      
+      - name: Create CLI zip (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd publish-cli
+          7z a -tzip ../EpisodeMatcher-cli-${{ matrix.artifact_suffix }}.zip .
+          cd ..
+      
+      - name: Create GUI zip (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cd publish-gui
+          zip -r ../EpisodeMatcher-gui-${{ matrix.artifact_suffix }}.zip .
+          cd ..
+      
+      - name: Create GUI zip (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd publish-gui
+          7z a -tzip ../EpisodeMatcher-gui-${{ matrix.artifact_suffix }}.zip .
+          cd ..
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_suffix }}
+          path: EpisodeMatcher-*.zip
+          retention-days: 5
+  
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+      
+      - name: Flatten artifacts
+        run: |
+          mkdir -p release-files
+          find artifacts -name "*.zip" -exec cp {} release-files/ \;
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release-files/*.zip
+          body: |
+            ## Release ${{ github.ref_name }}
+            
+            ### Downloads
+            - **CLI (Linux x64)**: `EpisodeMatcher-cli-linux-x64.zip`
+            - **CLI (Windows x64)**: `EpisodeMatcher-cli-windows-x64.zip`
+            - **GUI (Linux x64)**: `EpisodeMatcher-gui-linux-x64.zip`
+            - **GUI (Windows x64)**: `EpisodeMatcher-gui-windows-x64.zip`
+            
+            Each archive includes the application(s) plus README, LICENSE, and other documentation.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

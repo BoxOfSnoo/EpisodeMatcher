@@ -1,0 +1,42 @@
+# Build outputs
+bin/
+obj/
+publish/
+*.exe
+*.dll
+*.so
+*.dylib
+*.pdb
+
+# User files
+*.user
+*.userprefs
+.vs/
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+crash.log
+stdout.log
+stderr.log
+
+# OS files
+.DS_Store
+Thumbs.db
+.swp
+*~
+
+# IDE
+*.sln.iml
+.editorconfig
+
+# Dependencies
+packages/
+.packages/
+NuGetFallbackFolder/
+
+# Local development
+local/

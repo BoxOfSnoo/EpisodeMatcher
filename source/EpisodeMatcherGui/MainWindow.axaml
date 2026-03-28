@@ -1,0 +1,328 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:EpisodeMatcherGui.ViewModels"
+        xmlns:conv="clr-namespace:EpisodeMatcherGui.Converters"
+        xmlns:core="clr-namespace:EpisodeMatcherCore"
+        xmlns:vlc="clr-namespace:LibVLCSharp.Avalonia;assembly=LibVLCSharp.Avalonia"
+        x:Class="EpisodeMatcherGui.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="Episode Matcher"
+        Width="1200" Height="900"
+        MinWidth="720" MinHeight="520"
+        Background="#1e1e2e">
+
+  <Window.Resources>
+    <conv:StringToBrushConverter x:Key="StrBrush"/>
+  </Window.Resources>
+
+  <Window.Styles>
+    <Style Selector="TextBlock">
+      <Setter Property="Foreground" Value="#cdd6f4"/>
+    </Style>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="#313244"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding" Value="12"/>
+      <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="#89b4fa"/>
+      <Setter Property="Foreground" Value="#1e1e2e"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Padding" Value="16,8"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="Button.danger">
+      <Setter Property="Background" Value="#f38ba8"/>
+      <Setter Property="Foreground" Value="#1e1e2e"/>
+      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="Button.secondary">
+      <Setter Property="Background" Value="#45475a"/>
+      <Setter Property="Foreground" Value="#cdd6f4"/>
+      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="Background" Value="#1e1e2e"/>
+      <Setter Property="Foreground" Value="#cdd6f4"/>
+      <Setter Property="BorderBrush" Value="#585b70"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="NumericUpDown">
+      <Setter Property="Background" Value="#1e1e2e"/>
+      <Setter Property="Foreground" Value="#cdd6f4"/>
+      <Setter Property="BorderBrush" Value="#585b70"/>
+    </Style>
+  </Window.Styles>
+
+  <DockPanel Margin="12">
+
+    <!-- Tool status bar -->
+    <Border Classes="card" DockPanel.Dock="Top">
+      <StackPanel Orientation="Horizontal" Spacing="20">
+        <TextBlock Text="Tools:" FontWeight="SemiBold" VerticalAlignment="Center"/>
+        <ItemsControl ItemsSource="{Binding Tools}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="16"/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ToolStatus">
+              <StackPanel Orientation="Horizontal" Spacing="4"
+                          ToolTip.Tip="{Binding Detail}">
+                <TextBlock Text="{Binding Icon}" FontSize="14"/>
+                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                           Foreground="{Binding Color, Converter={StaticResource StrBrush}}"/>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button Classes="secondary" Content="Refresh" Click="OnRefreshTools"
+                VerticalAlignment="Center" Padding="8,4"/>
+      </StackPanel>
+    </Border>
+
+    <!-- Log panel -->
+    <Border Classes="card" DockPanel.Dock="Bottom" Height="150">
+      <DockPanel>
+        <TextBlock Text="Log" FontWeight="SemiBold" DockPanel.Dock="Top" Margin="0,0,0,6"/>
+        <ScrollViewer x:Name="LogScroll">
+          <TextBlock Text="{Binding Log}"
+                     FontFamily="Cascadia Code,Consolas,monospace"
+                     FontSize="11" TextWrapping="Wrap" Foreground="#a6e3a1"/>
+        </ScrollViewer>
+      </DockPanel>
+    </Border>
+
+    <!-- Centre content -->
+    <Grid ColumnDefinitions="*,8,300">
+
+      <!-- Left: episode list -->
+      <DockPanel Grid.Column="0">
+
+        <!-- Drop zone -->
+        <Border DockPanel.Dock="Top"
+                x:Name="DropZone"
+                Background="#1e1e2e"
+                BorderBrush="#585b70" BorderThickness="2"
+                CornerRadius="8" Padding="0" Margin="0,0,0,8"
+                Height="60">
+          <TextBlock Text="Drop MKV / MP4 files or folders here"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center"
+                     FontSize="14" Foreground="#585b70"/>
+        </Border>
+
+        <!-- Toolbar -->
+        <StackPanel Orientation="Horizontal" Spacing="6"
+                    DockPanel.Dock="Top" Margin="0,0,0,8">
+          <Button Classes="secondary" Content="Add Files..." Click="OnAddFiles"/>
+          <Button Classes="secondary" Content="Clear All"    Click="OnClearAll"/>
+          <Button Classes="danger"    Content="Remove Unchecked" Click="OnRemoveUnchecked"/>
+          <TextBlock VerticalAlignment="Center" Foreground="#585b70"
+                     Text="{Binding Episodes.Count, StringFormat='{}{0} file(s)'}"/>
+        </StackPanel>
+
+        <!-- Episode list -->
+        <Border Classes="card">
+          <ScrollViewer>
+            <ItemsControl ItemsSource="{Binding Episodes}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:EpisodeItemViewModel">
+                  <Border Background="#1e1e2e" CornerRadius="6"
+                          Padding="8,6" Margin="0,0,0,4"
+                          Cursor="Hand"
+                          PointerPressed="OnEpisodeSelected">
+                    <Grid ColumnDefinitions="28,*,160,60,24">
+
+                      <CheckBox Grid.Column="0"
+                                IsChecked="{Binding IsSelected}"
+                                VerticalAlignment="Center"/>
+
+                      <StackPanel Grid.Column="1" Spacing="2"
+                                  VerticalAlignment="Center" Margin="0,0,8,0"
+                                  ToolTip.Tip="{Binding HoveredCandidateText, FallbackValue={Binding ExtractedTextSnippet}}">
+                        <TextBlock Text="{Binding FileName}"
+                                   FontWeight="SemiBold" FontSize="12"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding MatchedName}"
+                                   FontSize="11" Foreground="#89b4fa"
+                                   TextTrimming="CharacterEllipsis"
+                                   IsVisible="{Binding MatchedName,
+                                     Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        <ItemsControl ItemsSource="{Binding TopCandidates}"
+                                      IsVisible="{Binding TopCandidates.Count}"
+                                      Margin="0,4,0,0">
+                          <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                              <StackPanel Orientation="Vertical" Spacing="2"/>
+                            </ItemsPanelTemplate>
+                          </ItemsControl.ItemsPanel>
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <Button Classes="secondary"
+                                      Padding="8,4" Height="24"
+                                      FontSize="10"
+                                      Click="OnSelectCandidate"
+                                      PointerEntered="OnCandidatePointerEnter"
+                                      PointerExited="OnCandidatePointerLeave"
+                                      Tag="{Binding}">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                  <TextBlock Text="→" Margin="0"/>
+                                  <TextBlock Text="{Binding Episode.EpisodeName}" Margin="0"/>
+                                  <TextBlock Text="{Binding Score, StringFormat='({0:P0})'}" 
+                                             Foreground="#a6adc8" Margin="0"/>
+                                </StackPanel>
+                              </Button>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+
+                      <TextBlock Grid.Column="2"
+                                 Text="{Binding StatusText}"
+                                 FontSize="11"
+                                 TextTrimming="CharacterEllipsis"
+                                 VerticalAlignment="Center"
+                                 Margin="0,0,8,0"
+                                 Foreground="{Binding StatusColor,
+                                   Converter={StaticResource StrBrush}}"/>
+
+                      <TextBlock Grid.Column="3"
+                                 Text="{Binding ScoreText}"
+                                 FontSize="11" Foreground="#a6adc8"
+                                 VerticalAlignment="Center"
+                                 HorizontalAlignment="Right"
+                                 Margin="0,0,8,0"/>
+
+                      <TextBlock Grid.Column="4"
+                                 Text="{Binding StatusIcon}"
+                                 FontSize="14"
+                                 VerticalAlignment="Center"
+                                 HorizontalAlignment="Center"/>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Border>
+
+      </DockPanel>
+
+      <!-- Right: settings + run -->
+      <DockPanel Grid.Column="2">
+
+        <!-- Settings -->
+        <Border Classes="card" DockPanel.Dock="Top">
+          <StackPanel Spacing="10">
+            <TextBlock Text="Settings" FontWeight="SemiBold"/>
+            <Grid ColumnDefinitions="*,Auto"
+                  RowDefinitions="Auto,8,Auto,8,Auto">
+
+              <TextBlock Grid.Row="0" Grid.Column="0"
+                         Text="Threads" VerticalAlignment="Center"/>
+              <NumericUpDown Grid.Row="0" Grid.Column="1"
+                             Value="{Binding ThreadCount}"
+                             Minimum="1" Maximum="16" Width="140"/>
+
+              <TextBlock Grid.Row="2" Grid.Column="0"
+                         Text="Window (seconds)" VerticalAlignment="Center"/>
+              <NumericUpDown Grid.Row="2" Grid.Column="1"
+                             Value="{Binding WindowSeconds}"
+                             Minimum="5" Maximum="300" Increment="5"
+                             Width="140"/>
+
+              <TextBlock Grid.Row="4" Grid.Column="0"
+                         Text="Min. score (0-1)" VerticalAlignment="Center"/>
+              <NumericUpDown Grid.Row="4" Grid.Column="1"
+                             Value="{Binding MinScore}"
+                             Minimum="0.01" Maximum="1.0" Increment="0.05"
+                             FormatString="0.00" Width="140"/>
+            </Grid>
+            <CheckBox Content="Dry Run (preview only)"
+                      IsChecked="{Binding DryRun}"/>
+          </StackPanel>
+        </Border>
+
+        <!-- SRT folder -->
+        <Border Classes="card" DockPanel.Dock="Top">
+          <StackPanel Spacing="6">
+            <TextBlock Text="Reference SRT Folder" FontWeight="SemiBold"/>
+            <Grid ColumnDefinitions="*,6,Auto">
+              <TextBox Grid.Column="0"
+                       Text="{Binding SrtFolder}"
+                       Watermark="Path to .srt / .zip files..."/>
+              <Button Grid.Column="2" Classes="secondary"
+                      Content="..." Click="OnBrowseSrt"/>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <!-- Video player -->
+        <Border Classes="card" DockPanel.Dock="Top" Height="140">
+          <DockPanel>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,4" Spacing="8" VerticalAlignment="Center">
+              <TextBlock Text="Video Preview" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <Button Classes="secondary" Content="▶ Play" Click="OnPlayPreview"
+                      IsVisible="{Binding SelectedVideoPath,
+                        Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                      Height="28" Padding="12,4"/>
+              <Button Classes="secondary" Content="⏹ Stop" Click="OnStopPreview"
+                      IsVisible="{Binding SelectedVideoPath,
+                        Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                      Height="28" Padding="12,4"/>
+            </StackPanel>
+            <vlc:VideoView x:Name="VideoView"
+                           IsVisible="{Binding SelectedVideoPath,
+                             Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            <TextBlock Text="Click a video file in the list to select it, then click 'Play' to preview"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Foreground="#585b70"
+                       FontSize="11"
+                       IsVisible="{Binding SelectedVideoPath,
+                         Converter={x:Static StringConverters.IsNullOrEmpty}}"
+                       TextWrapping="Wrap"/>
+          </DockPanel>
+        </Border>
+
+        <!-- Progress -->
+        <Border Classes="card" DockPanel.Dock="Bottom">
+          <StackPanel Spacing="6">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="Progress"
+                         FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="{Binding ProgressText}"
+                         Foreground="#a6adc8" FontSize="12"/>
+            </Grid>
+            <ProgressBar Value="{Binding Progress}"
+                         Maximum="{Binding ProgressMax}"
+                         Height="8" CornerRadius="4"
+                         Foreground="#89b4fa" Background="#45475a"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Run / Cancel -->
+        <StackPanel DockPanel.Dock="Bottom" Spacing="8">
+          <Button Classes="primary"
+                  Content="{Binding RunButtonText}"
+                  Click="OnRun"
+                  IsEnabled="{Binding CanRun}"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"/>
+          <Button Classes="danger"
+                  Content="Cancel"
+                  Click="OnCancel"
+                  IsEnabled="{Binding IsRunning}"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"/>
+        </StackPanel>
+
+      </DockPanel>
+    </Grid>
+  </DockPanel>
+</Window>
