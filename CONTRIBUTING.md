@@ -6,6 +6,10 @@ Thank you for your interest in contributing! This document outlines guidelines f
 
 Please be respectful and considerate of others when contributing to this project.
 
+## AI Usage
+
+AI-assisted contributions are welcome. Please read [AI_POLICY.md](AI_POLICY.md) for the full policy, including the requirement to manually review and verify all AI-generated code before submitting.
+
 ## How to Contribute
 
 ### Reporting Issues
