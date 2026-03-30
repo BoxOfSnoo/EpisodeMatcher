@@ -50,7 +50,7 @@ Automatically rename ripped TV episode files by matching their embedded subtitle
    choco install ffmpeg tesseract
 
    # Linux
-   sudo apt install ffmpeg tesseract-ocr
+   sudo apt install ffmpeg tesseract-ocr libvlc-dev
 
    # macOS
    brew install ffmpeg tesseract
@@ -134,7 +134,7 @@ choco install ffmpeg tesseract
 
 **Linux (Debian/Ubuntu)**
 ```bash
-sudo apt install ffmpeg tesseract-ocr mkvtoolnix
+sudo apt install ffmpeg tesseract-ocr mkvtoolnix libvlc-dev
 ```
 
 **macOS (Homebrew)**
@@ -367,8 +367,12 @@ dotnet publish EpisodeMatcherCli -c Release -r win-x64 \
 dotnet publish EpisodeMatcherGui -c Release -r win-x64 \
   --self-contained true -p:PublishSingleFile=true -o publish/
 
-# Linux x64
+# CLI - Linux x64
 dotnet publish EpisodeMatcherCli -c Release -r linux-x64 \
+  --self-contained true -p:PublishSingleFile=true -o publish/
+
+# GUI - Linux x64 (requires libvlc-dev installed: sudo apt install libvlc-dev)
+dotnet publish EpisodeMatcherGui -c Release -r linux-x64 \
   --self-contained true -p:PublishSingleFile=true -o publish/
 ```
 
@@ -407,7 +411,7 @@ See [REPOSITORY_STRUCTURE.md](REPOSITORY_STRUCTURE.md) for detailed architecture
 |----------|-----|-----|-------|
 | **Windows x64** | ✅ | ✅ | Primary platform, fully tested |
 | **Windows ARM64** | ⚠️ | ⚠️ | Untested but should work |
-| **Linux x64** | ✅ | ✅ | Requires X11 or Wayland |
+| **Linux x64** | ✅ | ✅ | Requires X11 or Wayland; GUI requires `libvlc-dev` |
 | **macOS** | ✅ | ✅ | Requires Xcode command-line tools |
 
 ---

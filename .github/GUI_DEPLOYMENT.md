@@ -23,6 +23,12 @@ Result: `publish/EpisodeMatcherGui.exe` (~100 MB) — ready to copy and run anyw
 dotnet publish EpisodeMatcherGui -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -o publish/
 ```
 
+> **Note:** On Linux, the GUI requires `libvlc` to be installed on the system for video preview:
+> ```bash
+> sudo apt install libvlc-dev   # Debian/Ubuntu
+> sudo dnf install vlc-libs     # Fedora
+> ```
+
 Result: `publish/EpisodeMatcherGui` — executable binary.
 
 ## If You Must Copy Files Manually
